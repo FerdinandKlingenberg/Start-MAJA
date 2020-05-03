@@ -23,8 +23,8 @@ class SRTM(MNT):
     def __init__(self, site, **kwargs):
         import math
         super(SRTM, self).__init__(site, **kwargs)
-        if math.fabs(self.site.ul_latlon[0]) > 60 or math.fabs(self.site.lr_latlon[0]) > 60:
-            raise ValueError("Latitude over +-60deg - No SRTM data available!")
+        # if math.fabs(self.site.ul_latlon[0]) > 60 or math.fabs(self.site.lr_latlon[0]) > 60:  # Remove Latitude test
+            # raise ValueError("Latitude over +-60deg - No SRTM data available!")               # Remove Latitude test 
         self.srtm_codes = self.get_srtm_codes(self.site)
 
     def get_raw_data(self):
@@ -37,14 +37,15 @@ class SRTM(MNT):
         from Common import FileSystem
         import logging
         filenames = []
-        for code in self.srtm_codes:
-            current_url = srtm_url % code
-            filename = os.path.basename(current_url)
-            output_path = os.path.join(self.raw_dem, filename)
-            if not os.path.isfile(output_path):
-                # Download file:
-                FileSystem.download_file(current_url, output_path, log_level=logging.INFO)
-            filenames.append(output_path)
+        filenames.append("/data/Maja_DEM/DTM10_UTM33_20200425_Soer.tif")   #Make sure to use correct DEM file over Norway
+        # for code in self.srtm_codes:
+        #     current_url = srtm_url % code
+        #     filename = os.path.basename(current_url)
+        #     output_path = os.path.join(self.raw_dem, filename)
+        #     if not os.path.isfile(output_path):
+        #         # Download file:
+        #         FileSystem.download_file(current_url, output_path, log_level=logging.INFO)
+        #     filenames.append(output_path)
         return filenames
 
     def prepare_mnt(self):
@@ -58,21 +59,23 @@ class SRTM(MNT):
         srtm_archives = self.get_raw_data()
         # Unzip the downloaded/found srtm zip files:
         unzipped = []
-        for arch in srtm_archives:
-            basename = os.path.splitext(os.path.basename(arch))[0]
-            FileSystem.unzip(arch, self.wdir)
-            fn_unzipped = FileSystem.find_single(pattern=basename + ".tif", path=self.wdir)
-            unzipped.append(fn_unzipped)
+        unzipped.append("/data/Maja_DEM/DTM10_UTM33_20200425_Soer.tif")    #Make sure to use correct DEM file over Norway
+        # for arch in srtm_archives:
+        #     basename = os.path.splitext(os.path.basename(arch))[0]
+        #     FileSystem.unzip(arch, self.wdir)
+        #     fn_unzipped = FileSystem.find_single(pattern=basename + ".tif", path=self.wdir)
+        #     unzipped.append(fn_unzipped)
         # Fusion of all SRTM files
         fusion_path = os.path.join(self.wdir, "srtm_combined.tif")
         ImageIO.gdal_merge(fusion_path, *unzipped)
         # Set nodata to 0
         fixed_nodata = os.path.join(self.wdir, "fixed_nodata.tif")
         ImageIO.gdal_warp(fixed_nodata, fusion_path,
-                          srcnodata=-32767,
+                          srcnodata=-32768,
                           dstnodata=0)
         # Combine to image of fixed extent
         srtm_full_res = os.path.join(self.wdir, "srtm_%sm.tif" % int(self.site.res_x))
+        # ImageIO.gdal_warp(srtm_full_res, fixed_nodata,
         ImageIO.gdal_warp(srtm_full_res, fixed_nodata,
                           r="cubic",
                           te=self.site.te_str,
@@ -86,13 +89,14 @@ class SRTM(MNT):
         Get the list of SRTM files for a given site.
         :return: The list of filenames needed in order to cover to whole site.
         """
-        ul_latlon_srtm = [int(site.ul_latlon[1] + 180) / 5 + 1, int(60 - site.ul_latlon[0]) / 5 + 1]
-        lr_latlon_srtm = [int(site.lr_latlon[1] + 180) / 5 + 1, int(60 - site.lr_latlon[0]) / 5 + 1]
+        # ul_latlon_srtm = [int(site.ul_latlon[1] + 180) / 5 + 1, int(60 - site.ul_latlon[0]) / 5 + 1]
+        # lr_latlon_srtm = [int(site.lr_latlon[1] + 180) / 5 + 1, int(60 - site.lr_latlon[0]) / 5 + 1]
 
         srtm_files = []
-        for x in range(int(ul_latlon_srtm[0]), int(lr_latlon_srtm[0] + 1)):
-            for y in range(int(ul_latlon_srtm[1]), int(lr_latlon_srtm[1] + 1)):
-                srtm_files.append("srtm_%02d_%02d" % (x, y))
+        srtm_files.append("/data/Maja_DEM/DTM10_UTM33_20200425_Soer.tif")
+        # for x in range(int(ul_latlon_srtm[0]), int(lr_latlon_srtm[0] + 1)):
+        #     for y in range(int(ul_latlon_srtm[1]), int(lr_latlon_srtm[1] + 1)):
+        #         srtm_files.append("srtm_%02d_%02d" % (x, y))
         return srtm_files
 
 

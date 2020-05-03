@@ -38,7 +38,8 @@ class MNTFactory:
         if self.mnt_type == "srtm":
             # SRTM is distributed in 90m.
             # Thus, all initial calculation has to be done at this resolution:
-            self.site.res_x, self.site.res_y = 90, 90
+            # self.site.res_x, self.site.res_y = 90, 90
+            self.site.res_x, self.site.res_y = 10, 10   # Changed to 10m 
             return SRTM(site=self.site,
                         **self.kwargs).to_maja_format(platform_id=self.plaform_id,
                                                       mission_field=self.mission_field,
